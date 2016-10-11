@@ -1,0 +1,88 @@
+{
+  "lldp": {
+    "interface": {
+      "vnet0": {
+        "via": "LLDP",
+        "rid": "13",
+        "age": "0 day, 00:07:15",
+        "chassis": {
+          "localhost": {
+            "descr": "Linux 2.6.32.27 #5 Wed Dec 21 12:11:46 CET 2011 i686",
+            "id": {
+              "value": "52:54:00:4b:19:d6",
+              "type": "mac"
+            },
+            "capability": [
+              {
+                "enabled": true,
+                "type": "Bridge"
+              },
+              {
+                "enabled": false,
+                "type": "Router"
+              },
+              {
+                "enabled": false,
+                "type": "Wlan"
+              }
+            ],
+            "mgmt-ip": "192.168.1.11"
+          }
+        },
+        "lldp-med": {
+          "inventory": {
+            "software": "2.6.32.27"
+          },
+          "location": {
+            "type": "Civic address",
+            "city": "Roseville",
+            "country": "FR",
+            "street": "Commercial Rd",
+            "number": "4"
+          },
+          "device-type": "Network Connectivity Device",
+          "capability": [
+            {
+              "type": "Capabilities"
+            },
+            {
+              "type": "Location"
+            },
+            {
+              "type": "Inventory"
+            }
+          ]
+        },
+        "port": {
+          "descr": "eth0",
+          "id": {
+            "value": "52:54:00:4b:19:d6",
+            "type": "mac"
+          },
+          "auto-negotiation": {
+            "current": "1000BaseTFD - Four-pair Category 5 UTP, full duplex mode",
+            "supported": true,
+            "enabled": true,
+            "advertised": [
+              {
+                "type": "10Base-T",
+                "hd": true,
+                "fd": true
+              },
+              {
+                "type": "100Base-TX",
+                "hd": true,
+                "fd": true
+              },
+              {
+                "type": "1000Base-T",
+                "hd": false,
+                "fd": true
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
