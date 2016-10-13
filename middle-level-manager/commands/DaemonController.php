@@ -17,7 +17,9 @@ class DaemonController extends Controller {
         $mdlist = Md::find()->all();
         
         foreach ($entries as $key1 => $entry) {
-        	if(($md1 = Md::find()->where($entry)->one()) == NULL){
+            $matchInfo = $entry;
+            unset($matchInfo['man_addr_entry']);
+        	if(($md1 = Md::find()->where($matchInfo)->one()) == NULL){
         		$md1 = new Md();
         		$entry['connect_time'] = (new \DateTime())->format('Y-m-d H:i:s');
         		$md1->setAttributes($entry);
@@ -25,10 +27,14 @@ class DaemonController extends Controller {
         			echo "A new device was found in the network\n";
 
         	}
-        	else
+        	else{
+                $md1->setAttributes($entry);
+                $md1->save();
+                
         		foreach($mdlist as $key2 => $md2)
         			if($md1->equals($md2))
         				unset($mdlist[$key2]);
+            }
         }
 
         foreach($mdlist as $md){

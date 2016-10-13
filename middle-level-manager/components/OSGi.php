@@ -56,7 +56,7 @@ class OSGi {
     public function installscript($url){
     	if($this->connect()){
     		$id = $this->command("felix:install ".$url);
-
+            //return $id;
     		return trim(preg_replace('/[a-zA-Z: ]*/', "", $id));
     	}
     }

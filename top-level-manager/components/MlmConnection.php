@@ -8,6 +8,9 @@ use app\models\Language;
 use app\models\Script;
 use app\models\Mlm;
 use app\models\MdFilter;
+use app\models\Md;
+
+use yii\db\Query;
 
 class MlmConnection { 
     protected $mlms = [];
@@ -73,48 +76,105 @@ class MlmConnection {
             }
 
             $this->requestMds($mlm);
-            $this->getMds();
+            $this->getMds($mlm);
             $this->mdsDiff();
             $this->getMdFilters();
- 
-            //Get MD Filters and try to match
-            $filterCount = 0;
-            foreach($this->mds as $md){
-                foreach($this->mdFilters as $mdFilter){
-                    $att = $mdFilter->attribute;
-                    if($md->{$att} == $mdFilter->value){
-                        $filterCount++;
-                        $script = $mdFilter->getIdScript()->one();
-                        $scriptMlm = $script->getMlms()->where(['url' => $mlm['url']])->one();
 
-                        if($scriptMlm == NULL){
-                            $repository = $script->getRepositories()->one();
-
-                            $scriptName = $this->myUrlEncode($script['name']);
-
-                            $data = ['url' => $repository['url']."/index.php/script/download?name=".$scriptName];
-                            //$data['sessionID'] = \Yii::$app->session['mbdsas-sessionid'];
-
-                            $curl = new Mycurl($mlm['url'].'/index.php/mbd/pullandrun');
-                            $curl->setPost($data);
-                            $curl->createCurl();
-                            $content = $curl->__tostring();   
-
-                            $return_json = json_decode($content);
-                            if(isset($return_json->response)){
-                                Yii::$app->db->createCommand()->insert('mlm_script',['mlm_id' => $mlm['id'], 'script_id' => $script['id']])->execute();
-                                echo $md->sys_name." - Script pulled and run: ".$script['name']."\n";
-                            }
-                            else{
-                                echo $md->sys_name." - Error: ".$return_json->error."\n";
-                            }
-                        }
-                    }
-                }
-            }
-            echo "Number of filters matched: ".$filterCount."\n";
+            $this->remove($mlm); 
+            $this->pushAndRun($mlm);
 
         }
+    }
+
+    private function pushAndRun($mlm){
+        //Get MD Filters and try to match
+        $filterCount = 0;
+        foreach($this->mlm_mds as $mlm_md){
+            //var_dump($mlm_md);die();
+            $mdObj = new Md();
+            $mdObj->setAttributes($mlm_md);
+            $mdObj->mlm_id = $mlm['id'];
+
+            if($mdObj->save())
+                foreach($this->mdFilters as $mdFilter){
+                    $att = $mdFilter->attribute;
+                    if($mlm_md[$att] == $mdFilter->value){
+                        $filterCount++;
+                        $script = $mdFilter->getIdScript()->one();
+
+                        $repository = $script->getRepositories()->one();
+
+                        $scriptName = $this->myUrlEncode($script['name']);
+
+                        $data = ['url' => $repository['url']."/index.php/script/download?name=".$scriptName];
+                        //$data['sessionID'] = \Yii::$app->session['mbdsas-sessionid'];
+
+                        $curl = new Mycurl($mlm['url'].'/index.php/mbd/pullandrun');
+                        $curl->setPost($data);
+                        $curl->createCurl();
+                        $content = $curl->__tostring();   
+
+                        $return_json = json_decode($content);
+                        //var_dump($return_json);
+                        if(isset($return_json->response)){
+                            Yii::$app->db->createCommand()
+                            ->insert('mlm_script',['mlm_id' => $mlm['id'], 'script_id' => $script['id'],'index' => $return_json->response])
+                            ->execute();
+                            echo $mlm_md['sys_name']." - Script pulled and run: ".$script['name']."\n";
+                        }
+                        else{
+                            echo $mlm_md['sys_name']." - Error: ".$return_json->error."\n";
+                        }
+                        
+                    }
+                }
+        }
+
+        echo "[Push and Run] Number of filters matched: ".$filterCount."\n";
+    }
+
+    private function remove($mlm){
+        $filterCount = 0;
+
+        foreach($this->mds as $md){
+            foreach($this->mdFilters as $mdFilter){
+                $att = $mdFilter->attribute;
+                if($md[$att] == $mdFilter->value){
+                    $filterCount++;
+                    $script = $mdFilter->getIdScript()->one();
+
+                    $result = (new \yii\db\Query())
+                    ->select('index')
+                    ->from('mlm_script')
+                    ->where(['mlm_id' => $mlm['id'], 'script_id' => $script['id']])
+                    ->one();
+                    //var_dump($result['index']);die();
+                    $scriptName = $this->myUrlEncode($script['name']);
+
+                    $data = ['id' => $result['index']];
+                    //$data['sessionID'] = \Yii::$app->session['mbdsas-sessionid'];
+
+                    $curl = new Mycurl($mlm['url'].'/index.php/mbd/remove');
+                    $curl->setPost($data);
+                    $curl->createCurl();
+                    $content = $curl->__tostring();   
+
+                    $return_json = json_decode($content);
+                    if(isset($return_json->response)){
+                        $mdObj = Md::findOne($md);
+                        $mdObj->delete();
+                        Yii::$app->db->createCommand()->delete('mlm_script',['mlm_id' => $mlm['id'], 'script_id' => $script['id']])->execute();
+                        echo $md['sys_name']." - Script removed: ".$script['name']."\n";
+                    }
+                    else{
+                        echo $md['sys_name']." - Error: ".$return_json->error."\n";
+                    }
+                    
+                }
+            }
+        }
+
+        echo "[Remove] Number of filters matched: ".$filterCount."\n";
     }
 
     private function requestMds($mlm){
@@ -122,12 +182,14 @@ class MlmConnection {
         $curl = new Mycurl($mlm['url'].'/index.php/mdlist/get');
         $curl->createCurl();
         $json = $curl->__tostring();
-        $this->mlm_mds = json_decode($json);
+        $this->mlm_mds = $this->object_to_array(json_decode($json));
     }
 
-    private function getMds(){
+    private function getMds($mlm){
         echo "Searching for MDs...\n";
-        $this->mds = Md::find()->all();
+        $myMLM = Mlm::find()->where(["url" => $mlm['url']])->one();
+
+        $this->mds = $this->object_to_array($myMLM->getMds()->all());
 
         if(!empty($this->mds))
             return true;
@@ -137,14 +199,27 @@ class MlmConnection {
 
     private function mdsDiff(){
         $mds = [];
+        $removeMds = [];
 
-        foreach($this->mds as $md){
-            unset($md['id']);
+        foreach($this->mds as $key1 => $md){
+            unset($this->mds[$key1]['id']);
         }
 
-        foreach($this->mlm_mds as $mlm_md){
-            foreach($this->mds as $md){
+        foreach($this->mlm_mds as $key2 => $mlm_md){
+            unset($this->mlm_mds[$key2]['id']);
+        }
 
+        foreach($this->mlm_mds as $key1 => $mlm_md){
+            foreach($this->mds as $key2 => $md){
+                unset($md['connect_time']);
+                unset($md['mlm_id']);
+                unset($mlm_md['connect_time']);
+
+                if($mlm_md === $md){
+                    unset($this->mlm_mds[$key1]);
+                    unset($this->mds[$key2]);
+                    break;
+                }
             }
         }
     }

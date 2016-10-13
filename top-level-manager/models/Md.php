@@ -10,6 +10,7 @@ use Yii;
  * @property integer $id
  * @property string $chassis_id_subtype
  * @property string $chassis_id
+ * @property string $port_id
  * @property string $port_id_subtype
  * @property string $port_desc
  * @property string $sys_name
@@ -38,9 +39,13 @@ class Md extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
+            [['sys_desc'], 'string'],
+            [['connect_time'], 'safe'],
             [['mlm_id'], 'required'],
             [['mlm_id'], 'integer'],
-            [['chassis_id_subtype', 'chassis_id', 'port_id_subtype', 'port_desc', 'sys_name', 'sys_desc', 'sys_cap_supported', 'sys_cap_enabled', 'man_addr_entry', 'connect_time'], 'string', 'max' => 45],
+            [['chassis_id_subtype', 'chassis_id', 'port_id', 'man_addr_entry'], 'string', 'max' => 45],
+            [['port_id_subtype', 'sys_cap_supported', 'sys_cap_enabled'], 'string', 'max' => 60],
+            [['port_desc', 'sys_name'], 'string', 'max' => 100],
             [['mlm_id'], 'exist', 'skipOnError' => true, 'targetClass' => Mlm::className(), 'targetAttribute' => ['mlm_id' => 'id']],
         ];
     }
@@ -54,6 +59,7 @@ class Md extends \yii\db\ActiveRecord
             'id' => 'ID',
             'chassis_id_subtype' => 'Chassis Id Subtype',
             'chassis_id' => 'Chassis ID',
+            'port_id' => 'Port ID',
             'port_id_subtype' => 'Port Id Subtype',
             'port_desc' => 'Port Desc',
             'sys_name' => 'Sys Name',

@@ -62,7 +62,7 @@ class MbdController extends \yii\rest\Controller
             if(is_numeric($id)){
                 $response = $osgi->runscript($id);
 
-                return ['response' => $response];
+                return ['response' => $id];
             }
             else
                 return ['error' => 'Script installation error'];
