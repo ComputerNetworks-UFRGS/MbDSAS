@@ -87,7 +87,7 @@ class RepositoryConnection {
                 if(!empty($scripts)){
                     echo "Inserting or updating scripts\n";
                     foreach($scripts as $key2 => $script){
-                        $scriptRecord = Script::find()->where(['name' => $script['name']])->one();
+                        $scriptRecord = Script::find()->where(['code_identifier' => $script['code_identifier']])->one();
 
                         if($scriptRecord == NULL){
                             $scriptRecord = new Script();
@@ -102,7 +102,13 @@ class RepositoryConnection {
                         else
                             $scriptId = $scriptRecord->id;
 
-                        \Yii::$app->db->createCommand()->insert('script_repository',['repository_id' => $repository['id'], 'script_id' => $scriptId])->execute();
+
+                        try{
+                            \Yii::$app->db->createCommand()->insert('script_repository',['repository_id' => $repository['id'], 'script_id' => $scriptId])->execute();
+                        }
+                        catch(\Exception $e){
+                            echo "Relation already inserted or an error has ocurred\n";
+                        }
 
                         if(!empty($script['md_filters'])){
                             echo "Inserting or updating md_filters\n";

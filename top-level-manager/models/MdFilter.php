@@ -13,6 +13,7 @@ use Yii;
  * @property string $operator
  * @property string $last_updated
  * @property integer $id_script
+ * @property string $identifier
  *
  * @property Script $idScript
  */
@@ -33,9 +34,11 @@ class MdFilter extends \yii\db\ActiveRecord
     {
         return [
             [['last_updated'], 'safe'],
-            [['id_script'], 'required'],
+            [['id_script', 'identifier'], 'required'],
             [['id_script'], 'integer'],
             [['attribute', 'value', 'operator'], 'string', 'max' => 45],
+            [['identifier'], 'string', 'max' => 32],
+            [['identifier'], 'unique'],
             [['id_script'], 'exist', 'skipOnError' => true, 'targetClass' => Script::className(), 'targetAttribute' => ['id_script' => 'id']],
         ];
     }
@@ -52,6 +55,7 @@ class MdFilter extends \yii\db\ActiveRecord
             'operator' => 'Operator',
             'last_updated' => 'Last Updated',
             'id_script' => 'Id Script',
+            'identifier' => 'Identifier',
         ];
     }
 
