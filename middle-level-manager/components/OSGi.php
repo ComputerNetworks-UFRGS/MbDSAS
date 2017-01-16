@@ -8,8 +8,9 @@
 namespace app\components;
  
 use Yii;
+use app\components\ISolution;
 
-class OSGi {
+class OSGi implements ISolution {
 	private $connected = false;
 	private $connection;
 	private $host;
@@ -21,6 +22,12 @@ class OSGi {
 		$this->port = $port;
 		$this->timeout = $timeout;
 	}
+
+    public function pull($source);
+    public function run($id, $args);
+    public function getResults();
+    public function pullAndRun($source, $args);
+    public function remove($id);
 
 	private function connect(){
         if(!$this->connected){

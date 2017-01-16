@@ -22,7 +22,10 @@ class AppAsset extends AssetBundle
     ];
     public $js = [
         'js/thirdparty/multiselect.js',
-        'js/mbdscripts.js'
+        'js/mbdscripts.js',
+        'js/thirdparty/highcharts/code/highcharts.js',
+        'js/thirdparty/highcharts/code/highcharts-more.js',
+        'js/thirdparty/highcharts/code/modules/solid-gauge.js'
     ];
     public $depends = [
         'yii\web\YiiAsset',
